@@ -1,0 +1,83 @@
+---
+title: "Differential Gene Expression Analysis"
+output: html_document
+date: "2025-04-09"
+---
+
+Install DESeq2 and pasilla with code script below. If it asks for updates, press 'a'
+Click yes if pop-up asks to install from the source:
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("DESeq2")
+BiocManager::install("pasilla")
+
+
+Instructions: use different types of chunk options. For example, message=FALSE inside first code chunk.
+If a code chunk returns a warning, add warning=FALSE
+
+```{r, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(tidyverse)
+```
+
+# Data Import
+
+```{r, message=FALSE, warning=FALSE}
+library(pasilla)
+pasCts <- system.file("extdata",
+                      "pasilla_gene_counts.tsv",
+                      package="pasilla", mustWork=TRUE)
+pasAnno <- system.file("extdata",
+                       "pasilla_sample_annotation.csv",
+                       package="pasilla", mustWork=TRUE)
+cts <- as.matrix(read.csv(pasCts,sep="\t",row.names="gene_id"))
+coldata <- read.csv(pasAnno, row.names=1)
+coldata <- coldata[,c("condition","type")]
+coldata$condition <- factor(coldata$condition)
+coldata$type <- factor(coldata$type)
+```
+
+# Gene raw counts
+
+```{r}
+as_tibble(cts)
+```
+
+# Metadata
+
+```{r}
+coldata
+```
+
+Note that these are not in the same order with respect to samples and it is absolutely critical that the columns of the count matrix and the rows of the column data (information about samples) are in the same order. DESeq2 will not make guesses as to which column of the count matrix belongs to which row of the column data, these must be provided to DESeq2 already in consistent order.
+
+We need to chop off the "fb" of the row names of coldata, so the naming is consistent:
+
+```{r}
+rownames(coldata) <- sub("fb", "", rownames(coldata))
+#check. Should return TRUE
+all(rownames(coldata) %in% colnames(cts))
+```
+Reorder cts's columns based on row order of metadata (coldata)
+
+```{r}
+cts <- cts[, rownames(coldata)]
+#Check again. Should return TRUE
+all(rownames(coldata) == colnames(cts))
+```
+Now you are on your own. You can look instructions from here: https://www.bioconductor.org/packages//release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+
+You don't have to do everything, just different things and to to figure out if code chunks doesn't work.
+When you are ready, knit result to HTML file
+
+Next:
+Create a DESeqDataSetFromMatrix variable called dds
+Try to figure out how to do Differential expression analysis with DEseq -function
+Check how many genes are differentially expressed using p-value 0.05
+Create MA plot
+Visualize data with heatmaps, PCA
+Challenge: Perform gene enrichment analysis
+
+
